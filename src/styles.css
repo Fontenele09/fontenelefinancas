@@ -64,10 +64,10 @@
   --muted: oklch(0.22 0.03 270);
   --muted-foreground: oklch(0.72 0.02 270);
 
-  --accent: oklch(0.78 0.13 85);            /* dourado */
+  --accent: oklch(0.98 0.005 270);          /* branco */
   --accent-foreground: oklch(0.18 0.04 270);
 
-  --gold: oklch(0.78 0.13 85);
+  --gold: oklch(0.98 0.005 270);
   --gold-foreground: oklch(0.18 0.04 270);
 
   --success: oklch(0.72 0.17 155);
@@ -78,19 +78,19 @@
 
   --border: oklch(0.28 0.03 270);
   --input: oklch(0.22 0.03 270);
-  --ring: oklch(0.78 0.13 85);
+  --ring: oklch(0.98 0.005 270);
 
-  --chart-1: oklch(0.78 0.13 85);
+  --chart-1: oklch(0.98 0.005 270);
   --chart-2: oklch(0.55 0.22 280);
   --chart-3: oklch(0.72 0.17 155);
   --chart-4: oklch(0.65 0.23 25);
   --chart-5: oklch(0.68 0.18 200);
 
-  --gradient-premium: linear-gradient(135deg, oklch(0.55 0.22 280) 0%, oklch(0.78 0.13 85) 100%);
+  --gradient-premium: linear-gradient(135deg, oklch(0.55 0.22 280) 0%, oklch(0.98 0.005 270) 100%);
   --gradient-card: linear-gradient(145deg, oklch(0.2 0.04 275) 0%, oklch(0.15 0.03 270) 100%);
   --gradient-glow: radial-gradient(circle at 30% 0%, oklch(0.55 0.22 280 / 0.25), transparent 60%);
   --shadow-elegant: 0 20px 60px -20px oklch(0.55 0.22 280 / 0.35);
-  --shadow-gold: 0 0 40px -10px oklch(0.78 0.13 85 / 0.4);
+  --shadow-gold: 0 0 40px -10px oklch(0.98 0.005 270 / 0.3);
 }
 
 .dark {
@@ -123,7 +123,7 @@
   .shadow-elegant { box-shadow: var(--shadow-elegant); }
   .shadow-gold { box-shadow: var(--shadow-gold); }
   .text-gradient-gold {
-    background: linear-gradient(135deg, oklch(0.88 0.13 90), oklch(0.7 0.15 80));
+    background: linear-gradient(135deg, oklch(1 0 0), oklch(0.85 0.005 270));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;

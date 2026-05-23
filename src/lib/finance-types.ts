@@ -6,6 +6,7 @@ export interface Account {
   type: "checking" | "savings" | "credit" | "cash" | "investment";
   initialBalance: number;
   color: string;
+  creditLimit?: number;
 }
 
 export interface Transaction {
