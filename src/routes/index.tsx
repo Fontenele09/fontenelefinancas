@@ -60,6 +60,13 @@ function Index() {
 
         <SummaryCards state={f.state} />
 
+        <RecurringBillsPanel
+          bills={f.state.recurringBills}
+          onAdd={f.addRecurringBill}
+          onRemove={f.removeRecurringBill}
+          onTogglePaid={f.toggleRecurringBillPaid}
+        />
+
         <FinanceCharts transactions={f.state.transactions} />
 
         <div className="grid gap-6 lg:grid-cols-3">
