@@ -24,11 +24,18 @@ export function AccountsPanel({
   const [name, setName] = useState("");
   const [type, setType] = useState<Account["type"]>("checking");
   const [initial, setInitial] = useState("");
+  const [limit, setLimit] = useState("");
 
   const submit = () => {
     if (!name) return;
-    onAdd({ name, type, initialBalance: parseFloat(initial.replace(",", ".")) || 0, color: "#4f46e5" });
-    setName(""); setInitial(""); setType("checking"); setOpen(false);
+    onAdd({
+      name,
+      type,
+      initialBalance: parseFloat(initial.replace(",", ".")) || 0,
+      color: "#4f46e5",
+      creditLimit: type === "credit" ? (parseFloat(limit.replace(",", ".")) || 0) : undefined,
+    });
+    setName(""); setInitial(""); setLimit(""); setType("checking"); setOpen(false);
   };
 
   const balance = (id: string, init: number) => {
@@ -36,6 +43,10 @@ export function AccountsPanel({
       .reduce((s, t) => s + (t.type === "income" ? t.amount : -t.amount), 0);
     return init + net;
   };
+
+  const spentOnCard = (id: string) =>
+    transactions.filter((t) => t.accountId === id && t.type === "expense")
+      .reduce((s, t) => s + t.amount, 0);
 
   return (
     <Card className="bg-gradient-card border-border/60 p-6">
@@ -56,6 +67,9 @@ export function AccountsPanel({
                 </SelectContent>
               </Select>
               <Input inputMode="decimal" placeholder="Saldo inicial" value={initial} onChange={(e) => setInitial(e.target.value)} />
+              {type === "credit" && (
+                <Input inputMode="decimal" placeholder="Limite do cartão" value={limit} onChange={(e) => setLimit(e.target.value)} />
+              )}
             </div>
             <DialogFooter>
               <Button onClick={submit} className="bg-gradient-premium text-primary-foreground">Adicionar</Button>
@@ -68,6 +82,12 @@ export function AccountsPanel({
         {accounts.map((a) => {
           const Icon = ICONS[a.type];
           const bal = balance(a.id, a.initialBalance);
+          const isCredit = a.type === "credit";
+          const spent = isCredit ? spentOnCard(a.id) : 0;
+          const cardLimit = a.creditLimit ?? 0;
+          const available = Math.max(cardLimit - spent, 0);
+          const usagePct = cardLimit > 0 ? Math.min((spent / cardLimit) * 100, 100) : 0;
+
           return (
             <div key={a.id} className="group relative overflow-hidden rounded-xl border border-border/60 bg-background/40 p-4">
               <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gradient-premium opacity-20 blur-2xl" />
@@ -85,9 +105,35 @@ export function AccountsPanel({
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
-              <p className={`mt-3 font-display text-2xl ${bal < 0 ? "text-destructive" : "text-gradient-gold"}`}>
-                {formatBRL(bal)}
-              </p>
+
+              {isCredit ? (
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Total gasto</p>
+                      <p className="font-display text-2xl text-destructive">{formatBRL(spent)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Limite</p>
+                      <p className="font-display text-lg">{formatBRL(cardLimit)}</p>
+                    </div>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-border/60">
+                    <div
+                      className="h-full rounded-full bg-gradient-premium transition-all"
+                      style={{ width: `${usagePct}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Disponível: <span className="text-foreground">{formatBRL(available)}</span>
+                    {cardLimit > 0 && <span> · {usagePct.toFixed(0)}% usado</span>}
+                  </p>
+                </div>
+              ) : (
+                <p className={`mt-3 font-display text-2xl ${bal < 0 ? "text-destructive" : "text-gradient-gold"}`}>
+                  {formatBRL(bal)}
+                </p>
+              )}
             </div>
           );
         })}
