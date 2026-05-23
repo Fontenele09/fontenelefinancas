@@ -123,7 +123,7 @@
   .shadow-elegant { box-shadow: var(--shadow-elegant); }
   .shadow-gold { box-shadow: var(--shadow-gold); }
   .text-gradient-gold {
-    background: linear-gradient(135deg, oklch(0.88 0.13 90), oklch(0.7 0.15 80));
+    background: linear-gradient(135deg, oklch(1 0 0), oklch(0.85 0.005 270));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
