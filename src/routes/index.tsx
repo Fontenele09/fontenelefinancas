@@ -8,6 +8,7 @@ import { FinanceCharts } from "@/components/finance/FinanceCharts";
 import { BudgetsPanel } from "@/components/finance/BudgetsPanel";
 import { GoalsPanel } from "@/components/finance/GoalsPanel";
 import { AccountsPanel } from "@/components/finance/AccountsPanel";
+import { RecurringBillsPanel } from "@/components/finance/RecurringBillsPanel";
 import { Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/")({
