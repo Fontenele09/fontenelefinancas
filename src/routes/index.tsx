@@ -8,6 +8,7 @@ import { FinanceCharts } from "@/components/finance/FinanceCharts";
 import { BudgetsPanel } from "@/components/finance/BudgetsPanel";
 import { GoalsPanel } from "@/components/finance/GoalsPanel";
 import { AccountsPanel } from "@/components/finance/AccountsPanel";
+import { RecurringBillsPanel } from "@/components/finance/RecurringBillsPanel";
 import { Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -58,6 +59,13 @@ function Index() {
         </section>
 
         <SummaryCards state={f.state} />
+
+        <RecurringBillsPanel
+          bills={f.state.recurringBills}
+          onAdd={f.addRecurringBill}
+          onRemove={f.removeRecurringBill}
+          onTogglePaid={f.toggleRecurringBillPaid}
+        />
 
         <FinanceCharts transactions={f.state.transactions} />
 

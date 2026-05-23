@@ -1,15 +1,16 @@
 import { useEffect, useState, useCallback } from "react";
-import type { FinanceState, Account, Transaction, Budget, Goal } from "@/lib/finance-types";
+import type { FinanceState, Account, Transaction, Budget, Goal, RecurringBill } from "@/lib/finance-types";
 
 const STORAGE_KEY = "finance:v1";
 
 const seed: FinanceState = {
   accounts: [
-    { id: crypto.randomUUID(), name: "Conta Principal", type: "checking", initialBalance: 0, color: "#4f46e5" },
+    { id: "default-account", name: "Conta Principal", type: "checking", initialBalance: 0, color: "#4f46e5" },
   ],
   transactions: [],
   budgets: [],
   goals: [],
+  recurringBills: [],
 };
 
 function load(): FinanceState {
@@ -82,12 +83,34 @@ export function useFinance() {
     setState((s) => ({ ...s, goals: s.goals.filter((g) => g.id !== id) }));
   }, []);
 
+  const addRecurringBill = useCallback((b: Omit<RecurringBill, "id">) => {
+    setState((s) => ({ ...s, recurringBills: [...s.recurringBills, { ...b, id: crypto.randomUUID() }] }));
+  }, []);
+
+  const removeRecurringBill = useCallback((id: string) => {
+    setState((s) => ({ ...s, recurringBills: s.recurringBills.filter((b) => b.id !== id) }));
+  }, []);
+
+  const toggleRecurringBillPaid = useCallback((id: string) => {
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    setState((s) => ({
+      ...s,
+      recurringBills: s.recurringBills.map((b) => {
+        if (b.id !== id) return b;
+        const isPaidThisMonth = b.paidMonth === currentMonth;
+        return { ...b, paidMonth: isPaidThisMonth ? undefined : currentMonth };
+      }),
+    }));
+  }, []);
+
   return {
     state, loaded,
     addTransaction, removeTransaction,
     addAccount, removeAccount,
     upsertBudget, removeBudget,
     addGoal, updateGoal, removeGoal,
+    addRecurringBill, removeRecurringBill, toggleRecurringBillPaid,
   };
 }
 
