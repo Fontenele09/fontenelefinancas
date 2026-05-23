@@ -5,11 +5,12 @@ const STORAGE_KEY = "finance:v1";
 
 const seed: FinanceState = {
   accounts: [
-    { id: crypto.randomUUID(), name: "Conta Principal", type: "checking", initialBalance: 0, color: "#4f46e5" },
+    { id: "default-account", name: "Conta Principal", type: "checking", initialBalance: 0, color: "#4f46e5" },
   ],
   transactions: [],
   budgets: [],
   goals: [],
+  recurringBills: [],
 };
 
 function load(): FinanceState {

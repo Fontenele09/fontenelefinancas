@@ -32,11 +32,22 @@ export interface Goal {
   deadline?: string;
 }
 
+export interface RecurringBill {
+  id: string;
+  name: string;
+  amount: number;
+  dueDay: number;
+  category?: string;
+  isPaid: boolean;
+  autoPay?: boolean;
+}
+
 export interface FinanceState {
   accounts: Account[];
   transactions: Transaction[];
   budgets: Budget[];
   goals: Goal[];
+  recurringBills: RecurringBill[];
 }
 
 export const EXPENSE_CATEGORIES = [
