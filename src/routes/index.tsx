@@ -13,9 +13,9 @@ import { Sparkles } from "lucide-react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Aurum — Organização Financeira" },
+      { title: "FONTENELE — Organização Financeira" },
       { name: "description", content: "Painel premium para organizar receitas, despesas, orçamentos e metas financeiras." },
-      { property: "og:title", content: "Aurum — Organização Financeira" },
+      { property: "og:title", content: "FONTENELE — Organização Financeira" },
       { property: "og:description", content: "Painel premium para organizar suas finanças pessoais." },
     ],
   }),
@@ -36,7 +36,7 @@ function Index() {
               <Sparkles className="h-5 w-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="font-display text-2xl leading-none">Aurum</h1>
+              <h1 className="font-display text-2xl leading-none">FONTENELE</h1>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Finanças pessoais</p>
             </div>
           </div>
