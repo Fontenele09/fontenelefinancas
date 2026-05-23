@@ -72,9 +72,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { name: "author", content: "FONTENELE" },
+      { name: "author", content: "Aurum" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { title: "Lovable App" },
+      { property: "og:title", content: "Lovable App" },
+      { name: "twitter:title", content: "Lovable App" },
+      { name: "description", content: "Finance Friend is a web application designed to manage your personal finances, replacing your Excel spreadsheets." },
+      { property: "og:description", content: "Finance Friend is a web application designed to manage your personal finances, replacing your Excel spreadsheets." },
+      { name: "twitter:description", content: "Finance Friend is a web application designed to manage your personal finances, replacing your Excel spreadsheets." },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
