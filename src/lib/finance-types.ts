@@ -38,7 +38,7 @@ export interface RecurringBill {
   amount: number;
   dueDay: number;
   category?: string;
-  isPaid: boolean;
+  paidMonth?: string; // "YYYY-MM" — vazio = não pago este mês
   autoPay?: boolean;
 }
 
