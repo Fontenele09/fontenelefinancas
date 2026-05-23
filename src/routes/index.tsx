@@ -48,15 +48,7 @@ function Index() {
       </header>
 
       <main className="mx-auto max-w-7xl space-y-6 px-6 py-8">
-        <section>
-          <p className="text-xs uppercase tracking-[0.25em] text-accent">Painel</p>
-          <h2 className="mt-1 font-display text-4xl">
-            Suas finanças, <span className="text-gradient-gold">organizadas</span>.
-          </h2>
-          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            Substitua sua planilha por um painel completo: lance receitas e despesas, acompanhe orçamentos, metas e o saldo de cada conta.
-          </p>
-        </section>
+
 
         <SummaryCards state={f.state} />
 
