@@ -12,7 +12,8 @@ import { GoalsPanel } from "@/components/finance/GoalsPanel";
 import { AccountsPanel } from "@/components/finance/AccountsPanel";
 import { RecurringBillsPanel } from "@/components/finance/RecurringBillsPanel";
 import { RoutineChecklist } from "@/components/routine/RoutineChecklist";
-import { Sparkles, Wallet, ListChecks } from "lucide-react";
+import { SecretaryPanel } from "@/components/secretary/SecretaryPanel";
+import { Sparkles, Wallet, ListChecks, Crown } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -59,6 +60,9 @@ function Index() {
             </TabsTrigger>
             <TabsTrigger value="rotina" className="gap-2 px-4">
               <ListChecks className="h-4 w-4" /> Checklist
+            </TabsTrigger>
+            <TabsTrigger value="aria" className="gap-2 px-4">
+              <Crown className="h-4 w-4" /> Aria
             </TabsTrigger>
           </TabsList>
 
