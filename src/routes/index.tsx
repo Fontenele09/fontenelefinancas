@@ -122,6 +122,10 @@ function Index() {
               onToggle={r.toggleCompletion}
             />
           </TabsContent>
+
+          <TabsContent value="aria" className="mt-6">
+            <SecretaryPanel finance={f.state} routine={r.state} />
+          </TabsContent>
         </Tabs>
       </main>
     </div>
