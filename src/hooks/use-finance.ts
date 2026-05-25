@@ -1,108 +1,175 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import type { FinanceState, Account, Transaction, Budget, Goal, RecurringBill } from "@/lib/finance-types";
 
-const STORAGE_KEY = "finance:v1";
-
-const seed: FinanceState = {
-  accounts: [
-    { id: "default-account", name: "Conta Principal", type: "checking", initialBalance: 0, color: "#4f46e5" },
-  ],
-  transactions: [],
-  budgets: [],
-  goals: [],
-  recurringBills: [],
+const empty: FinanceState = {
+  accounts: [], transactions: [], budgets: [], goals: [], recurringBills: [],
 };
 
-function load(): FinanceState {
-  if (typeof window === "undefined") return seed;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return seed;
-    return JSON.parse(raw) as FinanceState;
-  } catch {
-    return seed;
-  }
-}
+const mapAccount = (r: any): Account => ({
+  id: r.id, name: r.name, type: r.type,
+  initialBalance: Number(r.initial_balance), color: r.color,
+  creditLimit: r.credit_limit != null ? Number(r.credit_limit) : undefined,
+});
+const mapTx = (r: any): Transaction => ({
+  id: r.id, accountId: r.account_id, type: r.type, amount: Number(r.amount),
+  category: r.category, description: r.description ?? "", date: r.date,
+});
+const mapBudget = (r: any): Budget => ({ id: r.id, category: r.category, limit: Number(r.limit) });
+const mapGoal = (r: any): Goal => ({
+  id: r.id, name: r.name, target: Number(r.target), saved: Number(r.saved),
+  deadline: r.deadline ?? undefined,
+});
+const mapBill = (r: any): RecurringBill => ({
+  id: r.id, name: r.name, amount: Number(r.amount), dueDay: r.due_day,
+  category: r.category ?? undefined, paidMonth: r.paid_month ?? undefined, autoPay: r.auto_pay,
+});
 
 export function useFinance() {
-  const [state, setState] = useState<FinanceState>(seed);
+  const { user } = useAuth();
+  const [state, setState] = useState<FinanceState>(empty);
   const [loaded, setLoaded] = useState(false);
+  const userIdRef = useRef<string | null>(null);
+
+  const reload = useCallback(async () => {
+    if (!user) return;
+    try {
+      const [a, t, b, g, r] = await Promise.all([
+        supabase.from("finance_accounts").select("*").order("created_at"),
+        supabase.from("financial_transactions").select("*").order("date", { ascending: false }),
+        supabase.from("finance_budgets").select("*"),
+        supabase.from("finance_goals").select("*").order("created_at"),
+        supabase.from("finance_recurring_bills").select("*").order("due_day"),
+      ]);
+      setState({
+        accounts: (a.data ?? []).map(mapAccount),
+        transactions: (t.data ?? []).map(mapTx),
+        budgets: (b.data ?? []).map(mapBudget),
+        goals: (g.data ?? []).map(mapGoal),
+        recurringBills: (r.data ?? []).map(mapBill),
+      });
+      setLoaded(true);
+    } catch (e) {
+      console.error("[finance] load failed", e);
+      toast.error("Falha ao carregar dados financeiros");
+    }
+  }, [user]);
 
   useEffect(() => {
-    setState(load());
-    setLoaded(true);
-  }, []);
+    if (!user) { setState(empty); setLoaded(false); userIdRef.current = null; return; }
+    userIdRef.current = user.id;
+    reload();
 
-  useEffect(() => {
-    if (loaded) localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [state, loaded]);
+    const channel = supabase
+      .channel(`finance:${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "finance_accounts", filter: `user_id=eq.${user.id}` }, reload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "financial_transactions", filter: `user_id=eq.${user.id}` }, reload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "finance_budgets", filter: `user_id=eq.${user.id}` }, reload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "finance_goals", filter: `user_id=eq.${user.id}` }, reload)
+      .on("postgres_changes", { event: "*", schema: "public", table: "finance_recurring_bills", filter: `user_id=eq.${user.id}` }, reload)
+      .subscribe();
 
-  const addTransaction = useCallback((t: Omit<Transaction, "id">) => {
-    setState((s) => ({ ...s, transactions: [{ ...t, id: crypto.randomUUID() }, ...s.transactions] }));
-  }, []);
+    return () => { supabase.removeChannel(channel); };
+  }, [user, reload]);
 
-  const removeTransaction = useCallback((id: string) => {
-    setState((s) => ({ ...s, transactions: s.transactions.filter((t) => t.id !== id) }));
-  }, []);
+  const uid = () => userIdRef.current;
+  const guard = () => {
+    if (!uid()) { toast.error("Faça login para salvar"); return false; }
+    return true;
+  };
 
-  const addAccount = useCallback((a: Omit<Account, "id">) => {
-    setState((s) => ({ ...s, accounts: [...s.accounts, { ...a, id: crypto.randomUUID() }] }));
-  }, []);
-
-  const removeAccount = useCallback((id: string) => {
-    setState((s) => ({
-      ...s,
-      accounts: s.accounts.filter((a) => a.id !== id),
-      transactions: s.transactions.filter((t) => t.accountId !== id),
-    }));
-  }, []);
-
-  const upsertBudget = useCallback((b: Omit<Budget, "id"> & { id?: string }) => {
-    setState((s) => {
-      const existing = s.budgets.find((x) => x.category === b.category);
-      if (existing) {
-        return { ...s, budgets: s.budgets.map((x) => x.id === existing.id ? { ...x, limit: b.limit } : x) };
-      }
-      return { ...s, budgets: [...s.budgets, { ...b, id: crypto.randomUUID() }] };
+  const addTransaction = useCallback(async (t: Omit<Transaction, "id">) => {
+    if (!guard()) return;
+    const { error } = await supabase.from("financial_transactions").insert({
+      user_id: uid()!, account_id: t.accountId, type: t.type, amount: t.amount,
+      category: t.category, description: t.description ?? "", date: t.date,
     });
+    if (error) { console.error(error); toast.error("Erro ao salvar transação"); }
   }, []);
 
-  const removeBudget = useCallback((id: string) => {
-    setState((s) => ({ ...s, budgets: s.budgets.filter((b) => b.id !== id) }));
+  const removeTransaction = useCallback(async (id: string) => {
+    const { error } = await supabase.from("financial_transactions").delete().eq("id", id);
+    if (error) { console.error(error); toast.error("Erro ao remover"); }
   }, []);
 
-  const addGoal = useCallback((g: Omit<Goal, "id">) => {
-    setState((s) => ({ ...s, goals: [...s.goals, { ...g, id: crypto.randomUUID() }] }));
+  const addAccount = useCallback(async (a: Omit<Account, "id">) => {
+    if (!guard()) return;
+    const { error } = await supabase.from("finance_accounts").insert({
+      user_id: uid()!, name: a.name, type: a.type, initial_balance: a.initialBalance,
+      color: a.color, credit_limit: a.creditLimit ?? null,
+    });
+    if (error) { console.error(error); toast.error("Erro ao criar conta"); }
   }, []);
 
-  const updateGoal = useCallback((id: string, patch: Partial<Goal>) => {
-    setState((s) => ({ ...s, goals: s.goals.map((g) => g.id === id ? { ...g, ...patch } : g) }));
+  const removeAccount = useCallback(async (id: string) => {
+    await supabase.from("financial_transactions").delete().eq("account_id", id);
+    const { error } = await supabase.from("finance_accounts").delete().eq("id", id);
+    if (error) { console.error(error); toast.error("Erro ao remover conta"); }
   }, []);
 
-  const removeGoal = useCallback((id: string) => {
-    setState((s) => ({ ...s, goals: s.goals.filter((g) => g.id !== id) }));
+  const upsertBudget = useCallback(async (b: { category: string; limit: number }) => {
+    if (!guard()) return;
+    const { error } = await supabase.from("finance_budgets").upsert(
+      { user_id: uid()!, category: b.category, limit: b.limit },
+      { onConflict: "user_id,category" }
+    );
+    if (error) { console.error(error); toast.error("Erro ao salvar orçamento"); }
   }, []);
 
-  const addRecurringBill = useCallback((b: Omit<RecurringBill, "id">) => {
-    setState((s) => ({ ...s, recurringBills: [...s.recurringBills, { ...b, id: crypto.randomUUID() }] }));
+  const removeBudget = useCallback(async (id: string) => {
+    const { error } = await supabase.from("finance_budgets").delete().eq("id", id);
+    if (error) { console.error(error); toast.error("Erro ao remover"); }
   }, []);
 
-  const removeRecurringBill = useCallback((id: string) => {
-    setState((s) => ({ ...s, recurringBills: s.recurringBills.filter((b) => b.id !== id) }));
+  const addGoal = useCallback(async (g: Omit<Goal, "id">) => {
+    if (!guard()) return;
+    const { error } = await supabase.from("finance_goals").insert({
+      user_id: uid()!, name: g.name, target: g.target, saved: g.saved ?? 0,
+      deadline: g.deadline ?? null,
+    });
+    if (error) { console.error(error); toast.error("Erro ao criar meta"); }
   }, []);
 
-  const toggleRecurringBillPaid = useCallback((id: string) => {
+  const updateGoal = useCallback(async (id: string, patch: Partial<Goal>) => {
+    const dbPatch: any = {};
+    if (patch.name !== undefined) dbPatch.name = patch.name;
+    if (patch.target !== undefined) dbPatch.target = patch.target;
+    if (patch.saved !== undefined) dbPatch.saved = patch.saved;
+    if (patch.deadline !== undefined) dbPatch.deadline = patch.deadline ?? null;
+    const { error } = await supabase.from("finance_goals").update(dbPatch).eq("id", id);
+    if (error) { console.error(error); toast.error("Erro ao atualizar meta"); }
+  }, []);
+
+  const removeGoal = useCallback(async (id: string) => {
+    const { error } = await supabase.from("finance_goals").delete().eq("id", id);
+    if (error) { console.error(error); toast.error("Erro ao remover meta"); }
+  }, []);
+
+  const addRecurringBill = useCallback(async (b: Omit<RecurringBill, "id">) => {
+    if (!guard()) return;
+    const { error } = await supabase.from("finance_recurring_bills").insert({
+      user_id: uid()!, name: b.name, amount: b.amount, due_day: b.dueDay,
+      category: b.category ?? null, paid_month: b.paidMonth ?? null, auto_pay: b.autoPay ?? false,
+    });
+    if (error) { console.error(error); toast.error("Erro ao criar conta recorrente"); }
+  }, []);
+
+  const removeRecurringBill = useCallback(async (id: string) => {
+    const { error } = await supabase.from("finance_recurring_bills").delete().eq("id", id);
+    if (error) { console.error(error); toast.error("Erro ao remover"); }
+  }, []);
+
+  const toggleRecurringBillPaid = useCallback(async (id: string) => {
     const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    setState((s) => ({
-      ...s,
-      recurringBills: s.recurringBills.map((b) => {
-        if (b.id !== id) return b;
-        const isPaidThisMonth = b.paidMonth === currentMonth;
-        return { ...b, paidMonth: isPaidThisMonth ? undefined : currentMonth };
-      }),
-    }));
-  }, []);
+    const cm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const bill = state.recurringBills.find((x) => x.id === id);
+    if (!bill) return;
+    const next = bill.paidMonth === cm ? null : cm;
+    const { error } = await supabase.from("finance_recurring_bills").update({ paid_month: next }).eq("id", id);
+    if (error) { console.error(error); toast.error("Erro ao atualizar"); }
+  }, [state.recurringBills]);
 
   return {
     state, loaded,
