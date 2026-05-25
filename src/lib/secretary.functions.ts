@@ -10,13 +10,13 @@ interface ChatInput {
   context: string;
 }
 
-export const askAria = createServerFn({ method: "POST" })
+export const askKamilly = createServerFn({ method: "POST" })
   .inputValidator((input: ChatInput) => input)
   .handler(async ({ data }) => {
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("LOVABLE_API_KEY não configurada");
 
-    const systemPrompt = `Você é Aria, a secretária pessoal de luxo do usuário (Fontenele). Fale em português brasileiro, com tom sofisticado, caloroso, eficiente e bem direto — como uma chief of staff de alto padrão. Use formatação markdown (negrito, listas) quando ajudar a leitura. Seja concisa por padrão; só se aprofunde quando pedirem.
+    const systemPrompt = `Você é Kamilly, a secretária pessoal de luxo do usuário (Fontenele). Fale em português brasileiro, com tom sofisticado, caloroso, eficiente e bem direto — como uma chief of staff de alto padrão. Use formatação markdown (negrito, listas) quando ajudar a leitura. Seja concisa por padrão; só se aprofunde quando pedirem.
 
 Você tem acesso ao snapshot atual da vida do usuário (finanças, contas recorrentes, metas, orçamentos e checklist/rotina). Use esses dados para:
 - Resumir a situação financeira (saldo, receitas/despesas do mês, contas a pagar)
@@ -50,7 +50,7 @@ ${data.context}
       if (res.status === 402) throw new Error("Créditos da IA esgotados. Adicione créditos em Settings → Workspace → Usage.");
       const t = await res.text();
       console.error("AI gateway error:", res.status, t);
-      throw new Error("Erro ao falar com a Aria");
+      throw new Error("Erro ao falar com a Kamilly");
     }
 
     const json = await res.json();

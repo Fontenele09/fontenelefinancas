@@ -101,7 +101,7 @@ export function AccountsPanel({
                     <p className="text-xs text-muted-foreground">{ACCOUNT_TYPE_LABEL[a.type]}</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="icon" className="opacity-0 transition-opacity group-hover:opacity-100" onClick={() => onRemove(a.id)}>
+                <Button variant="ghost" size="icon" onClick={() => onRemove(a.id)}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>

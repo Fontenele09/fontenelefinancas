@@ -62,7 +62,7 @@ function Index() {
               <ListChecks className="h-4 w-4" /> Checklist
             </TabsTrigger>
             <TabsTrigger value="aria" className="gap-2 px-4">
-              <Crown className="h-4 w-4" /> Aria
+              <Crown className="h-4 w-4" /> Kamilly
             </TabsTrigger>
           </TabsList>
 
