@@ -41,6 +41,165 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_accounts: {
+        Row: {
+          color: string
+          created_at: string
+          credit_limit: number | null
+          id: string
+          initial_balance: number
+          name: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          credit_limit?: number | null
+          id?: string
+          initial_balance?: number
+          name: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          credit_limit?: number | null
+          id?: string
+          initial_balance?: number
+          name?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      finance_budgets: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          limit: number
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          limit: number
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          limit?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      finance_goals: {
+        Row: {
+          created_at: string
+          deadline: string | null
+          id: string
+          name: string
+          saved: number
+          target: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          name: string
+          saved?: number
+          target: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deadline?: string | null
+          id?: string
+          name?: string
+          saved?: number
+          target?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      finance_recurring_bills: {
+        Row: {
+          amount: number
+          auto_pay: boolean
+          category: string | null
+          created_at: string
+          due_day: number
+          id: string
+          name: string
+          paid_month: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          auto_pay?: boolean
+          category?: string | null
+          created_at?: string
+          due_day: number
+          id?: string
+          name: string
+          paid_month?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          auto_pay?: boolean
+          category?: string | null
+          created_at?: string
+          due_day?: number
+          id?: string
+          name?: string
+          paid_month?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      financial_transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          category: string
+          created_at: string
+          date: string
+          description: string
+          id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          category: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
