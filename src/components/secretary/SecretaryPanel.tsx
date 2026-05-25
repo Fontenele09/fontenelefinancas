@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useServerFn } from "@tanstack/react-start";
 import { Send, Sparkles, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { askAria } from "@/lib/secretary.functions";
+import { askKamilly } from "@/lib/secretary.functions";
 import { formatBRL } from "@/hooks/use-finance";
 import type { FinanceState } from "@/lib/finance-types";
 import type { RoutineState } from "@/hooks/use-routine";
@@ -118,11 +118,11 @@ function buildContext(finance: FinanceState, routine: RoutineState): string {
 }
 
 export function SecretaryPanel({ finance, routine }: { finance: FinanceState; routine: RoutineState }) {
-  const ask = useServerFn(askAria);
+  const ask = useServerFn(askKamilly);
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "assistant",
-      content: "Bom dia. Sou a **Aria**, sua secretária pessoal. Posso te dar o resumo do dia, lembrar das contas pendentes, comentar seu checklist ou conversar sobre suas finanças. Como posso te ajudar?",
+      content: "Bom dia. Sou a **Kamilly**, sua secretária pessoal. Posso te dar o resumo do dia, lembrar das contas pendentes, comentar seu checklist ou conversar sobre suas finanças. Como posso te ajudar?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -147,7 +147,7 @@ export function SecretaryPanel({ finance, routine }: { finance: FinanceState; ro
       const { reply } = await ask({ data: { messages: next, context } });
       setMessages((m) => [...m, { role: "assistant", content: reply || "(sem resposta)" }]);
     } catch (e: any) {
-      toast.error(e?.message ?? "Erro ao falar com a Aria");
+      toast.error(e?.message ?? "Erro ao falar com a Kamilly");
       setMessages((m) => m.slice(0, -1));
       setInput(content);
     } finally {
@@ -169,7 +169,7 @@ export function SecretaryPanel({ finance, routine }: { finance: FinanceState; ro
           <Sparkles className="h-5 w-5 text-primary-foreground" />
         </div>
         <div>
-          <h2 className="font-display text-xl leading-none">Aria</h2>
+          <h2 className="font-display text-xl leading-none">Kamilly</h2>
           <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Sua secretária pessoal</p>
         </div>
       </div>
@@ -197,7 +197,7 @@ export function SecretaryPanel({ finance, routine }: { finance: FinanceState; ro
         {loading && (
           <div className="flex justify-start">
             <div className="rounded-2xl border border-border/60 bg-background/60 px-4 py-3 text-sm text-muted-foreground">
-              <Loader2 className="inline h-4 w-4 animate-spin" /> Aria está pensando…
+              <Loader2 className="inline h-4 w-4 animate-spin" /> Kamilly está pensando…
             </div>
           </div>
         )}
@@ -218,7 +218,7 @@ export function SecretaryPanel({ finance, routine }: { finance: FinanceState; ro
         className="flex gap-2 border-t border-border/60 px-6 py-4"
       >
         <Input
-          placeholder="Pergunte algo à Aria…"
+          placeholder="Pergunte algo com a Kamilly…"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={loading}
