@@ -14,7 +14,7 @@ export function TransactionForm({
   onAdd,
 }: {
   accounts: Account[];
-  onAdd: (t: { accountId: string; type: TxType; amount: number; category: string; description: string; date: string }) => void;
+  onAdd: (t: { accountId: string; type: TxType; amount: number; category: string; description: string; date: string }) => Promise<boolean>;
 }) {
   const [type, setType] = useState<TxType>("expense");
   const [amount, setAmount] = useState("");
@@ -25,13 +25,14 @@ export function TransactionForm({
 
   const categories = type === "expense" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const value = parseFloat(amount.replace(",", "."));
     if (!value || value <= 0) return toast.error("Informe um valor válido");
     if (!category) return toast.error("Escolha uma categoria");
     if (!accountId) return toast.error("Cadastre uma conta primeiro");
-    onAdd({ accountId, type, amount: value, category, description, date: new Date(date).toISOString() });
+    const saved = await onAdd({ accountId, type, amount: value, category, description, date: new Date(date).toISOString() });
+    if (!saved) return;
     setAmount(""); setDescription("");
     toast.success(type === "income" ? "Receita registrada" : "Despesa registrada");
   };

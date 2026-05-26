@@ -28,9 +28,9 @@ export function RecurringBillsPanel({
   onTogglePaid,
 }: {
   bills: RecurringBill[];
-  onAdd: (b: Omit<RecurringBill, "id">) => void;
-  onRemove: (id: string) => void;
-  onTogglePaid: (id: string) => void;
+  onAdd: (b: Omit<RecurringBill, "id">) => Promise<boolean>;
+  onRemove: (id: string) => Promise<boolean>;
+  onTogglePaid: (id: string) => Promise<boolean>;
 }) {
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
@@ -44,12 +44,13 @@ export function RecurringBillsPanel({
   const paid = bills.filter((b) => b.paidMonth === currentMonth).reduce((sum, b) => sum + b.amount, 0);
   const pending = total - paid;
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const v = parseFloat(amount.replace(",", "."));
     const d = parseInt(dueDay, 10);
     if (!name || !v || !d || d < 1 || d > 31) return;
-    onAdd({ name, amount: v, dueDay: d, category: category || undefined, paidMonth: undefined });
+    const saved = await onAdd({ name, amount: v, dueDay: d, category: category || undefined, paidMonth: undefined });
+    if (!saved) return;
     setName(""); setAmount(""); setDueDay(""); setCategory("");
   };
 

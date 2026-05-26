@@ -11,18 +11,19 @@ export function GoalsPanel({
   goals, onAdd, onUpdate, onRemove,
 }: {
   goals: Goal[];
-  onAdd: (g: Omit<Goal, "id">) => void;
-  onUpdate: (id: string, patch: Partial<Goal>) => void;
-  onRemove: (id: string) => void;
+  onAdd: (g: Omit<Goal, "id">) => Promise<boolean>;
+  onUpdate: (id: string, patch: Partial<Goal>) => Promise<boolean>;
+  onRemove: (id: string) => Promise<boolean>;
 }) {
   const [name, setName] = useState("");
   const [target, setTarget] = useState("");
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const v = parseFloat(target.replace(",", "."));
     if (!name || !v) return;
-    onAdd({ name, target: v, saved: 0 });
+    const saved = await onAdd({ name, target: v, saved: 0 });
+    if (!saved) return;
     setName(""); setTarget("");
   };
 
