@@ -17,8 +17,8 @@ export function AccountsPanel({
 }: {
   accounts: Account[];
   transactions: Transaction[];
-  onAdd: (a: Omit<Account, "id">) => void;
-  onRemove: (id: string) => void;
+  onAdd: (a: Omit<Account, "id">) => Promise<boolean>;
+  onRemove: (id: string) => Promise<boolean>;
 }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -26,15 +26,16 @@ export function AccountsPanel({
   const [initial, setInitial] = useState("");
   const [limit, setLimit] = useState("");
 
-  const submit = () => {
+  const submit = async () => {
     if (!name) return;
-    onAdd({
+    const saved = await onAdd({
       name,
       type,
       initialBalance: parseFloat(initial.replace(",", ".")) || 0,
       color: "#4f46e5",
       creditLimit: type === "credit" ? (parseFloat(limit.replace(",", ".")) || 0) : undefined,
     });
+    if (!saved) return;
     setName(""); setInitial(""); setLimit(""); setType("checking"); setOpen(false);
   };
 

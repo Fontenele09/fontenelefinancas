@@ -14,8 +14,8 @@ export function BudgetsPanel({
 }: {
   budgets: Budget[];
   transactions: Transaction[];
-  onUpsert: (b: { category: string; limit: number }) => void;
-  onRemove: (id: string) => void;
+  onUpsert: (b: { category: string; limit: number }) => Promise<boolean>;
+  onRemove: (id: string) => Promise<boolean>;
 }) {
   const [cat, setCat] = useState("");
   const [limit, setLimit] = useState("");
@@ -28,11 +28,12 @@ export function BudgetsPanel({
       return acc;
     }, {});
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const v = parseFloat(limit.replace(",", "."));
     if (!cat || !v) return;
-    onUpsert({ category: cat, limit: v });
+    const saved = await onUpsert({ category: cat, limit: v });
+    if (!saved) return;
     setCat(""); setLimit("");
   };
 
