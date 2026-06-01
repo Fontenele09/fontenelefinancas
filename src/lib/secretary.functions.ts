@@ -1,17 +1,20 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { z } from "zod";
 
-interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
-}
+const ChatMessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().min(1).max(4000),
+});
 
-interface ChatInput {
-  messages: ChatMessage[];
-  context: string;
-}
+const ChatInputSchema = z.object({
+  messages: z.array(ChatMessageSchema).min(1).max(50),
+  context: z.string().max(8000),
+});
 
 export const askKamilly = createServerFn({ method: "POST" })
-  .inputValidator((input: ChatInput) => input)
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => ChatInputSchema.parse(input))
   .handler(async ({ data }) => {
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("LOVABLE_API_KEY não configurada");
