@@ -10,6 +10,7 @@ import { DashboardHero } from "@/components/dashboard/DashboardHero";
 import { TransactionForm } from "@/components/finance/TransactionForm";
 import { TransactionList } from "@/components/finance/TransactionList";
 import { FinanceCharts } from "@/components/finance/FinanceCharts";
+import { ReportsPanel } from "@/components/finance/ReportsPanel";
 import { BudgetsPanel } from "@/components/finance/BudgetsPanel";
 import { GoalsPanel } from "@/components/finance/GoalsPanel";
 import { AccountsPanel } from "@/components/finance/AccountsPanel";
@@ -19,7 +20,7 @@ import { RoutinePanel } from "@/components/routine/RoutinePanel";
 import { SecretaryPanel } from "@/components/secretary/SecretaryPanel";
 import { Greeting } from "@/components/dashboard/Greeting";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Sparkles, Wallet, ListChecks, Crown, LogOut, Loader2 } from "lucide-react";
+import { Sparkles, Wallet, ListChecks, Crown, LogOut, Loader2, BarChart3 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -78,6 +79,9 @@ function Index() {
             <TabsTrigger value="financas" className="gap-1.5 px-4">
               <Wallet className="h-4 w-4" /> Finanças
             </TabsTrigger>
+            <TabsTrigger value="relatorios" className="gap-1.5 px-4">
+              <BarChart3 className="h-4 w-4" /> Relatórios
+            </TabsTrigger>
             <TabsTrigger value="rotina" className="gap-1.5 px-4">
               <ListChecks className="h-4 w-4" /> Rotina
             </TabsTrigger>
@@ -116,6 +120,10 @@ function Index() {
 
           <TabsContent value="rotina" className="mt-6">
             <RoutinePanel />
+          </TabsContent>
+
+          <TabsContent value="relatorios" className="mt-6">
+            <ReportsPanel state={f.state} />
           </TabsContent>
 
           <TabsContent value="kamilly" className="mt-6">

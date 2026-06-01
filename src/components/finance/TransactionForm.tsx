@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, type Account, type TxType } from "@/lib/finance-types";
 
@@ -14,7 +15,7 @@ export function TransactionForm({
   onAdd,
 }: {
   accounts: Account[];
-  onAdd: (t: { accountId: string; type: TxType; amount: number; category: string; description: string; date: string }) => Promise<boolean>;
+  onAdd: (t: { accountId: string; type: TxType; amount: number; category: string; description: string; date: string; tags: string[] }) => Promise<boolean>;
 }) {
   const [type, setType] = useState<TxType>("expense");
   const [amount, setAmount] = useState("");
@@ -22,8 +23,17 @@ export function TransactionForm({
   const [description, setDescription] = useState("");
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? "");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
 
   const categories = type === "expense" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+
+  const addTag = () => {
+    const t = tagInput.trim().replace(/^#/, "");
+    if (!t) return;
+    if (!tags.includes(t)) setTags([...tags, t]);
+    setTagInput("");
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,9 +41,9 @@ export function TransactionForm({
     if (!value || value <= 0) return toast.error("Informe um valor válido");
     if (!category) return toast.error("Escolha uma categoria");
     if (!accountId) return toast.error("Cadastre uma conta primeiro");
-    const saved = await onAdd({ accountId, type, amount: value, category, description, date: new Date(date).toISOString() });
+    const saved = await onAdd({ accountId, type, amount: value, category, description, date: new Date(date).toISOString(), tags });
     if (!saved) return;
-    setAmount(""); setDescription("");
+    setAmount(""); setDescription(""); setTags([]); setTagInput("");
     toast.success(type === "income" ? "Receita registrada" : "Despesa registrada");
   };
 
@@ -82,6 +92,31 @@ export function TransactionForm({
         <div>
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">Descrição</Label>
           <Input placeholder="Opcional" value={description} onChange={(e) => setDescription(e.target.value)} className="mt-1.5" />
+        </div>
+
+        <div>
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Tags</Label>
+          <div className="mt-1.5 flex gap-2">
+            <Input
+              placeholder="ex: trabalho, urgente"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTag(); } }}
+            />
+            <Button type="button" variant="secondary" size="icon" onClick={addTag}><Plus className="h-4 w-4" /></Button>
+          </div>
+          {tags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {tags.map((t) => (
+                <Badge key={t} variant="secondary" className="gap-1">
+                  #{t}
+                  <button type="button" onClick={() => setTags(tags.filter((x) => x !== t))} aria-label="Remover">
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
 
         <Button type="submit" className="w-full bg-gradient-premium text-primary-foreground shadow-elegant hover:opacity-95">

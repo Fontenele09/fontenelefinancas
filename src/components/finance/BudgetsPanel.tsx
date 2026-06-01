@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trash2, Target } from "lucide-react";
+import { Trash2, Target, AlertTriangle } from "lucide-react";
 import { formatBRL } from "@/hooks/use-finance";
 import { EXPENSE_CATEGORIES, type Budget, type Transaction } from "@/lib/finance-types";
 import { startOfMonth } from "date-fns";
@@ -56,15 +56,21 @@ export function BudgetsPanel({
       </form>
 
       <div className="mt-5 space-y-4">
-        {budgets.length === 0 && <p className="text-sm text-muted-foreground">Defina limites por categoria para acompanhar seus gastos.</p>}
+        {budgets.length === 0 && <p className="text-sm text-muted-foreground">Defina limites por categoria. Avisamos em 80% e 100% do limite.</p>}
         {budgets.map((b) => {
           const spent = spentByCat[b.category] ?? 0;
           const pct = Math.min(100, (spent / b.limit) * 100);
-          const over = spent > b.limit;
+          const realPct = (spent / b.limit) * 100;
+          const over = realPct >= 100;
+          const warn = realPct >= 80 && !over;
           return (
             <div key={b.id}>
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium">{b.category}</span>
+                <span className="flex items-center gap-1.5 font-medium">
+                  {b.category}
+                  {over && <span className="flex items-center gap-1 rounded-full bg-destructive/15 px-1.5 py-0.5 text-[10px] text-destructive"><AlertTriangle className="h-2.5 w-2.5" />Estourado</span>}
+                  {warn && <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] text-amber-400"><AlertTriangle className="h-2.5 w-2.5" />{realPct.toFixed(0)}%</span>}
+                </span>
                 <div className="flex items-center gap-2">
                   <span className={over ? "text-destructive" : "text-muted-foreground"}>
                     {formatBRL(spent)} / {formatBRL(b.limit)}
@@ -74,7 +80,10 @@ export function BudgetsPanel({
                   </Button>
                 </div>
               </div>
-              <Progress value={pct} className={`mt-2 h-2 ${over ? "[&>div]:bg-destructive" : "[&>div]:bg-gradient-premium"}`} />
+              <Progress
+                value={pct}
+                className={`mt-2 h-2 ${over ? "[&>div]:bg-destructive" : warn ? "[&>div]:bg-amber-500" : "[&>div]:bg-gradient-premium"}`}
+              />
             </div>
           );
         })}

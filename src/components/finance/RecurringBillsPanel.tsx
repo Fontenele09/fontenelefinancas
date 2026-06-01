@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, Repeat, AlertTriangle, CalendarCheck, Clock } from "lucide-react";
 import { formatBRL } from "@/hooks/use-finance";
-import { EXPENSE_CATEGORIES, type RecurringBill } from "@/lib/finance-types";
+import { EXPENSE_CATEGORIES, FREQUENCY_LABEL, FREQUENCY_PER_MONTH, type Frequency, type RecurringBill } from "@/lib/finance-types";
 
 function getStatus(dueDay: number, paidMonth?: string) {
   const now = new Date();
@@ -22,10 +22,7 @@ function getStatus(dueDay: number, paidMonth?: string) {
 }
 
 export function RecurringBillsPanel({
-  bills,
-  onAdd,
-  onRemove,
-  onTogglePaid,
+  bills, onAdd, onRemove, onTogglePaid,
 }: {
   bills: RecurringBill[];
   onAdd: (b: Omit<RecurringBill, "id">) => Promise<boolean>;
@@ -36,22 +33,25 @@ export function RecurringBillsPanel({
   const [amount, setAmount] = useState("");
   const [dueDay, setDueDay] = useState("");
   const [category, setCategory] = useState("");
+  const [frequency, setFrequency] = useState<Frequency>("monthly");
 
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-  const total = bills.reduce((sum, b) => sum + b.amount, 0);
-  const paid = bills.filter((b) => b.paidMonth === currentMonth).reduce((sum, b) => sum + b.amount, 0);
-  const pending = total - paid;
+  // total comprometido por mês considerando frequência
+  const monthlyCommitted = bills.reduce((s, b) => s + b.amount * FREQUENCY_PER_MONTH[b.frequency], 0);
+  const monthlyBills = bills.filter((b) => b.frequency === "monthly");
+  const paid = monthlyBills.filter((b) => b.paidMonth === currentMonth).reduce((s, b) => s + b.amount, 0);
+  const pending = monthlyBills.reduce((s, b) => s + b.amount, 0) - paid;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const v = parseFloat(amount.replace(",", "."));
     const d = parseInt(dueDay, 10);
     if (!name || !v || !d || d < 1 || d > 31) return;
-    const saved = await onAdd({ name, amount: v, dueDay: d, category: category || undefined, paidMonth: undefined });
+    const saved = await onAdd({ name, amount: v, dueDay: d, frequency, category: category || undefined, paidMonth: undefined });
     if (!saved) return;
-    setName(""); setAmount(""); setDueDay(""); setCategory("");
+    setName(""); setAmount(""); setDueDay(""); setCategory(""); setFrequency("monthly");
   };
 
   return (
@@ -59,51 +59,63 @@ export function RecurringBillsPanel({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Repeat className="h-5 w-5 text-accent" />
-          <h3 className="font-display text-xl">Contas Recorrentes</h3>
-        </div>
-        <div className="flex items-center gap-4 text-xs">
-          <span className="text-muted-foreground">
-            Pago: <span className="font-medium text-success">{formatBRL(paid)}</span>
-          </span>
-          <span className="text-muted-foreground">
-            Pendente: <span className="font-medium text-foreground">{formatBRL(pending)}</span>
-          </span>
+          <h3 className="font-display text-xl">Assinaturas & Recorrentes</h3>
         </div>
       </div>
 
-      <form onSubmit={submit} className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-4">
-        <Input placeholder="Nome (ex: Aluguel)" value={name} onChange={(e) => setName(e.target.value)} />
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        <div className="rounded-lg border border-border/50 bg-background/30 px-3 py-2">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Comprometido/mês</p>
+          <p className="font-display text-lg text-gradient-gold">{formatBRL(monthlyCommitted)}</p>
+        </div>
+        <div className="rounded-lg border border-border/50 bg-background/30 px-3 py-2">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Pago (mensais)</p>
+          <p className="font-display text-lg text-success">{formatBRL(paid)}</p>
+        </div>
+        <div className="rounded-lg border border-border/50 bg-background/30 px-3 py-2">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Pendente</p>
+          <p className="font-display text-lg">{formatBRL(pending)}</p>
+        </div>
+      </div>
+
+      <form onSubmit={submit} className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <Input placeholder="Nome (ex: Netflix)" value={name} onChange={(e) => setName(e.target.value)} />
         <Input inputMode="decimal" placeholder="Valor" value={amount} onChange={(e) => setAmount(e.target.value)} />
         <Input inputMode="numeric" placeholder="Dia venc. (1-31)" value={dueDay} onChange={(e) => setDueDay(e.target.value)} />
-        <div className="flex gap-2">
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="flex-1"><SelectValue placeholder="Categoria" /></SelectTrigger>
-            <SelectContent>
-              {EXPENSE_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Button type="submit" variant="secondary">Adicionar</Button>
-        </div>
+        <Select value={frequency} onValueChange={(v) => setFrequency(v as Frequency)}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {Object.entries(FREQUENCY_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={category} onValueChange={setCategory}>
+          <SelectTrigger><SelectValue placeholder="Categoria" /></SelectTrigger>
+          <SelectContent>
+            {EXPENSE_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Button type="submit" variant="secondary">Adicionar</Button>
       </form>
 
-      <div className="mt-5 space-y-3">
+      <div className="mt-5 space-y-2">
         {bills.length === 0 && (
-          <p className="text-sm text-muted-foreground">Adicione suas contas mensais fixas (aluguel, energia, internet, etc.) para acompanhar os vencimentos.</p>
+          <p className="text-sm text-muted-foreground">Adicione assinaturas e contas fixas para acompanhar vencimentos.</p>
         )}
         {bills.map((b) => {
           const status = getStatus(b.dueDay, b.paidMonth);
           const isPaid = b.paidMonth === currentMonth;
           const StatusIcon = status.variant === "destructive" ? AlertTriangle : status.variant === "warning" ? Clock : CalendarCheck;
           return (
-            <div key={b.id} className="flex items-center gap-3 rounded-lg border border-border/50 bg-background/40 px-4 py-3">
+            <div key={b.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-border/50 bg-background/40 px-3 py-2.5">
               <Checkbox
                 checked={isPaid}
                 onCheckedChange={() => onTogglePaid(b.id)}
                 className="border-accent data-[state=checked]:bg-accent data-[state=checked]:text-primary-foreground"
               />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5">
                   <p className={`truncate font-medium ${isPaid ? "line-through text-muted-foreground" : ""}`}>{b.name}</p>
+                  <Badge variant="outline" className="text-[10px]">{FREQUENCY_LABEL[b.frequency]}</Badge>
                   {b.category && <Badge variant="secondary" className="text-[10px]">{b.category}</Badge>}
                 </div>
                 <p className="text-xs text-muted-foreground">Vence dia {b.dueDay}</p>

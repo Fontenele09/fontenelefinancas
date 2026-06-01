@@ -100,6 +100,7 @@ export type Database = {
       }
       finance_goals: {
         Row: {
+          category: string | null
           created_at: string
           deadline: string | null
           id: string
@@ -109,6 +110,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
           deadline?: string | null
           id?: string
@@ -118,6 +120,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          category?: string | null
           created_at?: string
           deadline?: string | null
           id?: string
@@ -135,6 +138,7 @@ export type Database = {
           category: string | null
           created_at: string
           due_day: number
+          frequency: string
           id: string
           name: string
           paid_month: string | null
@@ -146,6 +150,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           due_day: number
+          frequency?: string
           id?: string
           name: string
           paid_month?: string | null
@@ -157,6 +162,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           due_day?: number
+          frequency?: string
           id?: string
           name?: string
           paid_month?: string | null
@@ -173,6 +179,7 @@ export type Database = {
           date: string
           description: string
           id: string
+          tags: string[]
           type: string
           user_id: string
         }
@@ -184,6 +191,7 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          tags?: string[]
           type: string
           user_id: string
         }
@@ -195,6 +203,7 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          tags?: string[]
           type?: string
           user_id?: string
         }

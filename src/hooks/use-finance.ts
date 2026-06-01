@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import type { FinanceState, Account, Transaction, Budget, Goal, RecurringBill } from "@/lib/finance-types";
+import type { FinanceState, Account, Transaction, Budget, Goal, RecurringBill, Frequency } from "@/lib/finance-types";
+import { startOfMonth } from "date-fns";
 
 const empty: FinanceState = {
   accounts: [], transactions: [], budgets: [], goals: [], recurringBills: [],
@@ -16,14 +17,16 @@ const mapAccount = (r: any): Account => ({
 const mapTx = (r: any): Transaction => ({
   id: r.id, accountId: r.account_id, type: r.type, amount: Number(r.amount),
   category: r.category, description: r.description ?? "", date: r.date,
+  tags: Array.isArray(r.tags) ? r.tags : [],
 });
 const mapBudget = (r: any): Budget => ({ id: r.id, category: r.category, limit: Number(r.limit) });
 const mapGoal = (r: any): Goal => ({
   id: r.id, name: r.name, target: Number(r.target), saved: Number(r.saved),
-  deadline: r.deadline ?? undefined,
+  deadline: r.deadline ?? undefined, category: r.category ?? undefined,
 });
 const mapBill = (r: any): RecurringBill => ({
   id: r.id, name: r.name, amount: Number(r.amount), dueDay: r.due_day,
+  frequency: (r.frequency ?? "monthly") as Frequency,
   category: r.category ?? undefined, paidMonth: r.paid_month ?? undefined, autoPay: r.auto_pay,
 });
 
@@ -32,6 +35,7 @@ export function useFinance() {
   const [state, setState] = useState<FinanceState>(empty);
   const [loaded, setLoaded] = useState(false);
   const userIdRef = useRef<string | null>(null);
+  const alertedRef = useRef<Set<string>>(new Set());
 
   const reload = useCallback(async () => {
     if (!user) return false;
@@ -90,20 +94,47 @@ export function useFinance() {
     return true;
   }, [reload]);
 
+  // ----- BUDGET ALERTS -----
+  const checkBudgetAlert = useCallback((category: string) => {
+    const budget = state.budgets.find((b) => b.category === category);
+    if (!budget) return;
+    const ms = startOfMonth(new Date());
+    const spent = state.transactions
+      .filter((t) => t.type === "expense" && t.category === category && new Date(t.date) >= ms)
+      .reduce((s, t) => s + t.amount, 0);
+    const pct = (spent / budget.limit) * 100;
+    const cm = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+    const key100 = `${cm}:${category}:100`;
+    const key80 = `${cm}:${category}:80`;
+    if (pct >= 100 && !alertedRef.current.has(key100)) {
+      alertedRef.current.add(key100);
+      toast.error(`Orçamento estourado em ${category}`, {
+        description: `Você ultrapassou o limite de ${budget.limit.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
+      });
+    } else if (pct >= 80 && pct < 100 && !alertedRef.current.has(key80)) {
+      alertedRef.current.add(key80);
+      toast.warning(`Atenção: ${category} em ${pct.toFixed(0)}%`, {
+        description: `Você já gastou ${spent.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} de ${budget.limit.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}.`,
+      });
+    }
+  }, [state.budgets, state.transactions]);
+
   const addTransaction = useCallback(async (t: Omit<Transaction, "id">) => {
     if (!guard()) return false;
     const { error } = await supabase.from("financial_transactions").insert({
       user_id: uid()!, account_id: t.accountId, type: t.type, amount: t.amount,
       category: t.category, description: t.description ?? "", date: t.date,
-    });
+      tags: t.tags ?? [],
+    } as any);
     if (error) {
       console.error(error);
       toast.error(error.message || "Erro ao salvar transação");
       return false;
     }
     await refreshAfterWrite();
+    if (t.type === "expense") setTimeout(() => checkBudgetAlert(t.category), 100);
     return true;
-  }, [authLoading, refreshAfterWrite]);
+  }, [authLoading, refreshAfterWrite, checkBudgetAlert]);
 
   const removeTransaction = useCallback(async (id: string) => {
     if (!guard()) return false;
@@ -157,8 +188,8 @@ export function useFinance() {
     if (!guard()) return false;
     const { error } = await supabase.from("finance_goals").insert({
       user_id: uid()!, name: g.name, target: g.target, saved: g.saved ?? 0,
-      deadline: g.deadline ?? null,
-    });
+      deadline: g.deadline ?? null, category: g.category ?? null,
+    } as any);
     if (error) { console.error(error); toast.error(error.message || "Erro ao criar meta"); return false; }
     await refreshAfterWrite();
     return true;
@@ -171,6 +202,7 @@ export function useFinance() {
     if (patch.target !== undefined) dbPatch.target = patch.target;
     if (patch.saved !== undefined) dbPatch.saved = patch.saved;
     if (patch.deadline !== undefined) dbPatch.deadline = patch.deadline ?? null;
+    if (patch.category !== undefined) dbPatch.category = patch.category ?? null;
     const { error } = await supabase.from("finance_goals").update(dbPatch).eq("id", id);
     if (error) { console.error(error); toast.error(error.message || "Erro ao atualizar meta"); return false; }
     await refreshAfterWrite();
@@ -189,8 +221,9 @@ export function useFinance() {
     if (!guard()) return false;
     const { error } = await supabase.from("finance_recurring_bills").insert({
       user_id: uid()!, name: b.name, amount: b.amount, due_day: b.dueDay,
+      frequency: b.frequency ?? "monthly",
       category: b.category ?? null, paid_month: b.paidMonth ?? null, auto_pay: b.autoPay ?? false,
-    });
+    } as any);
     if (error) { console.error(error); toast.error(error.message || "Erro ao criar conta recorrente"); return false; }
     await refreshAfterWrite();
     return true;
