@@ -14,7 +14,7 @@ export function QuickAddFAB({
   onAdd,
 }: {
   accounts: Account[];
-  onAdd: (t: { accountId: string; type: TxType; amount: number; category: string; description: string; date: string }) => Promise<boolean>;
+  onAdd: (t: { accountId: string; type: TxType; amount: number; category: string; description: string; date: string; tags: string[] }) => Promise<boolean>;
 }) {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<TxType>("expense");
@@ -41,7 +41,7 @@ export function QuickAddFAB({
     if (!accountId) return toast.error("Cadastre uma conta primeiro");
     const ok = await onAdd({
       accountId, type, amount: v, category, description,
-      date: new Date().toISOString(),
+      date: new Date().toISOString(), tags: [],
     });
     if (!ok) return;
     toast.success(type === "income" ? "Receita registrada" : "Despesa registrada");
