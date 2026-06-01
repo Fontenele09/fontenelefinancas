@@ -31,6 +31,18 @@ export function QuickAddFAB({
     }
   }, [open, accounts]);
 
+  // Cmd+K / Ctrl+K global shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   const cats = type === "expense" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
 
   const submit = async (e: React.FormEvent) => {
@@ -53,7 +65,8 @@ export function QuickAddFAB({
     <>
       <button
         onClick={() => setOpen(true)}
-        aria-label="Lançamento rápido"
+        aria-label="Lançamento rápido (Cmd+K)"
+        title="Lançamento rápido — ⌘K"
         className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-premium text-primary-foreground shadow-elegant transition-transform hover:scale-105 active:scale-95 sm:bottom-8 sm:right-8"
       >
         <Plus className="h-6 w-6" />
@@ -62,7 +75,10 @@ export function QuickAddFAB({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Lançamento rápido</DialogTitle>
+            <DialogTitle className="flex items-center justify-between">
+              <span>Lançamento rápido</span>
+              <kbd className="rounded border border-border bg-surface-2 px-1.5 py-0.5 text-[10px] text-muted-foreground">⌘K</kbd>
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={submit} className="space-y-4">
             <Tabs value={type} onValueChange={(v) => { setType(v as TxType); setCategory(""); }}>

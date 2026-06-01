@@ -76,7 +76,7 @@ function LoginPage() {
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-premium shadow-elegant">
             <Sparkles className="h-7 w-7 text-primary-foreground" />
           </div>
-          <h1 className="font-display text-3xl">FONTENELE</h1>
+          <h1 className="font-display text-3xl" suppressHydrationWarning>FONTENELE</h1>
           <p className="text-sm text-muted-foreground">Sua rotina e finanças em um só lugar</p>
         </div>
 
