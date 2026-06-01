@@ -100,11 +100,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className="dark" style={{ colorScheme: "dark" }}>
+    <html lang="pt-BR" className="dark theme-midnight" style={{ colorScheme: "dark" }} suppressHydrationWarning>
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('fontenele-theme')||'midnight';var r=document.documentElement;r.classList.remove('dark','light','theme-midnight','theme-arctic','theme-silver');if(t==='arctic'){r.classList.add('light','theme-arctic');r.style.colorScheme='light';}else if(t==='silver'){r.classList.add('dark','theme-silver');r.style.colorScheme='dark';}else{r.classList.add('dark','theme-midnight');r.style.colorScheme='dark';}}catch(e){}})();`,
+          }}
+        />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {children}
         <Scripts />
       </body>
