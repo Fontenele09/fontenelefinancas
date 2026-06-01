@@ -1,4 +1,5 @@
 export type TxType = "income" | "expense";
+export type Frequency = "weekly" | "monthly" | "yearly";
 
 export interface Account {
   id: string;
@@ -17,6 +18,7 @@ export interface Transaction {
   category: string;
   description: string;
   date: string;
+  tags: string[];
 }
 
 export interface Budget {
@@ -31,6 +33,7 @@ export interface Goal {
   target: number;
   saved: number;
   deadline?: string;
+  category?: string;
 }
 
 export interface RecurringBill {
@@ -38,6 +41,7 @@ export interface RecurringBill {
   name: string;
   amount: number;
   dueDay: number;
+  frequency: Frequency;
   category?: string;
   paidMonth?: string;
   autoPay?: boolean;
@@ -66,6 +70,19 @@ export const ACCOUNT_TYPE_LABEL: Record<Account["type"], string> = {
   credit: "Cartão de Crédito",
   cash: "Dinheiro",
   investment: "Investimentos",
+};
+
+export const FREQUENCY_LABEL: Record<Frequency, string> = {
+  weekly: "Semanal",
+  monthly: "Mensal",
+  yearly: "Anual",
+};
+
+// quantas ocorrências por mês (média) — usado em projeções e total comprometido
+export const FREQUENCY_PER_MONTH: Record<Frequency, number> = {
+  weekly: 4.333,
+  monthly: 1,
+  yearly: 1 / 12,
 };
 
 export interface BankPreset {
