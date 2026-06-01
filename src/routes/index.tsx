@@ -5,7 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useFinance } from "@/hooks/use-finance";
 import { useAuth } from "@/hooks/use-auth";
-import { SummaryCards } from "@/components/finance/SummaryCards";
+import { useTheme } from "@/hooks/use-theme";
+import { DashboardHero } from "@/components/dashboard/DashboardHero";
 import { TransactionForm } from "@/components/finance/TransactionForm";
 import { TransactionList } from "@/components/finance/TransactionList";
 import { FinanceCharts } from "@/components/finance/FinanceCharts";
@@ -13,9 +14,11 @@ import { BudgetsPanel } from "@/components/finance/BudgetsPanel";
 import { GoalsPanel } from "@/components/finance/GoalsPanel";
 import { AccountsPanel } from "@/components/finance/AccountsPanel";
 import { RecurringBillsPanel } from "@/components/finance/RecurringBillsPanel";
+import { QuickAddFAB } from "@/components/finance/QuickAddFAB";
 import { RoutinePanel } from "@/components/routine/RoutinePanel";
 import { SecretaryPanel } from "@/components/secretary/SecretaryPanel";
 import { Greeting } from "@/components/dashboard/Greeting";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Sparkles, Wallet, ListChecks, Crown, LogOut, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -31,6 +34,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   const navigate = useNavigate();
   const { user, profile, loading, signOut } = useAuth();
+  const { theme } = useTheme();
   const f = useFinance();
 
   useEffect(() => {
@@ -47,9 +51,9 @@ function Index() {
 
   return (
     <div className="min-h-screen pb-24">
-      <Toaster theme="dark" position="top-right" richColors />
+      <Toaster theme={theme} position="top-right" richColors />
 
-      <header className="border-b border-border/40 bg-background/60 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 border-b border-border/40 bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-6">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-premium shadow-elegant">
@@ -57,46 +61,51 @@ function Index() {
             </div>
             <span className="font-display text-lg tracking-tight">FONTENELE</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground">
-            <LogOut className="mr-1.5 h-3.5 w-3.5" /> Sair
-          </Button>
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground">
+              <LogOut className="mr-1.5 h-3.5 w-3.5" /> Sair
+            </Button>
+          </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-6xl space-y-8 px-5 py-8 sm:px-6">
         <Greeting profile={profile} user={user} />
 
-        <Tabs defaultValue="rotina" className="w-full">
+        <Tabs defaultValue="financas" className="w-full">
           <TabsList className="h-11 w-full justify-start gap-1 bg-muted/30 p-1 sm:w-auto">
-            <TabsTrigger value="rotina" className="gap-1.5 px-4">
-              <ListChecks className="h-4 w-4" /> Rotina
-            </TabsTrigger>
             <TabsTrigger value="financas" className="gap-1.5 px-4">
               <Wallet className="h-4 w-4" /> Finanças
+            </TabsTrigger>
+            <TabsTrigger value="rotina" className="gap-1.5 px-4">
+              <ListChecks className="h-4 w-4" /> Rotina
             </TabsTrigger>
             <TabsTrigger value="kamilly" className="gap-1.5 px-4">
               <Crown className="h-4 w-4" /> Kamilly
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="rotina" className="mt-6">
-            <RoutinePanel />
-          </TabsContent>
-
           <TabsContent value="financas" className="mt-6 space-y-6">
-            <SummaryCards state={f.state} />
-            <RecurringBillsPanel
-              bills={f.state.recurringBills}
-              onAdd={f.addRecurringBill}
-              onRemove={f.removeRecurringBill}
-              onTogglePaid={f.toggleRecurringBillPaid}
-            />
-            <FinanceCharts transactions={f.state.transactions} />
+            <DashboardHero state={f.state} />
             <div className="grid gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <TransactionList transactions={f.state.transactions} accounts={f.state.accounts} onRemove={f.removeTransaction} />
+              <div className="lg:col-span-2 space-y-6">
+                <FinanceCharts transactions={f.state.transactions} />
+                <TransactionList
+                  transactions={f.state.transactions}
+                  accounts={f.state.accounts}
+                  onRemove={f.removeTransaction}
+                />
               </div>
-              <TransactionForm accounts={f.state.accounts} onAdd={f.addTransaction} />
+              <div className="space-y-6">
+                <TransactionForm accounts={f.state.accounts} onAdd={f.addTransaction} />
+                <RecurringBillsPanel
+                  bills={f.state.recurringBills}
+                  onAdd={f.addRecurringBill}
+                  onRemove={f.removeRecurringBill}
+                  onTogglePaid={f.toggleRecurringBillPaid}
+                />
+              </div>
             </div>
             <AccountsPanel accounts={f.state.accounts} transactions={f.state.transactions} onAdd={f.addAccount} onRemove={f.removeAccount} />
             <div className="grid gap-6 lg:grid-cols-2">
@@ -105,11 +114,17 @@ function Index() {
             </div>
           </TabsContent>
 
+          <TabsContent value="rotina" className="mt-6">
+            <RoutinePanel />
+          </TabsContent>
+
           <TabsContent value="kamilly" className="mt-6">
             <SecretaryPanel finance={f.state} routine={{ tasks: [], completions: {} }} />
           </TabsContent>
         </Tabs>
       </main>
+
+      <QuickAddFAB accounts={f.state.accounts} onAdd={f.addTransaction} />
     </div>
   );
 }
