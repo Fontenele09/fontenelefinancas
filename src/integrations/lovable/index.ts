@@ -36,6 +36,3 @@ export const lovable = {
     },
   },
 };
-#lovable-badge {
-display: none !important;
-}
