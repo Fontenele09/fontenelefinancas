@@ -54,6 +54,13 @@ export const toggleCompletion = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ routine_id: z.string().uuid(), date: z.string() }).parse(d))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
+    // Verify the routine belongs to the caller (RLS-scoped client returns only owned rows)
+    const { data: owned } = await supabase
+      .from("routines")
+      .select("id")
+      .eq("id", data.routine_id)
+      .maybeSingle();
+    if (!owned) throw new Error("Routine not found");
     const { data: existing } = await supabase
       .from("routine_completions")
       .select("id")
